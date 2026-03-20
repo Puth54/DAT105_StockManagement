@@ -1,6 +1,8 @@
 import Product.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class InputBasicData extends JFrame {
 
@@ -33,14 +35,21 @@ public class InputBasicData extends JFrame {
         pack();
         setLocationRelativeTo(null);
 
-        
-        btnCancel.addActionListener(e -> {
-            addWindowForm.setVisible(true);
-            dispose();
+        // Cancel
+        btnCancel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
         });
 
-        
-        btnConfirm.addActionListener(e -> handleConfirm());
+        // Confirm
+        btnConfirm.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleConfirm();
+            }
+        });
     }
 
     private void handleConfirm() {
@@ -52,33 +61,26 @@ public class InputBasicData extends JFrame {
         String maxStr = typeMax.getText().trim();
         String minStr = typeMin.getText().trim();
 
+        // ===== VALIDATION =====
         if (idStr.isEmpty() || nameStr.isEmpty() || priceStr.isEmpty()
                 || qtyStr.isEmpty() || maxStr.isEmpty() || minStr.isEmpty()) {
 
-            JOptionPane.showMessageDialog(this,
-                    "Please fill in all fields.",
-                    "Missing Information",
-                    JOptionPane.WARNING_MESSAGE);
+            showError("Please fill in all basic information fields.");
             return;
         }
 
-        if (!idStr.matches("^P\\d{4}$")) {
-            JOptionPane.showMessageDialog(this,
-                    "Product ID must be in format P0001 - P9999",
-                    "Invalid ID Format",
-                    JOptionPane.ERROR_MESSAGE);
+        // format ID
+        if (!idStr.matches("P\\d{4}")) {
+            showError("Product ID must be Pxxxx (e.g. P0001)");
             return;
         }
 
+        // duplicate ID
         if (management.checkProductId(idStr)) {
-            JOptionPane.showMessageDialog(this,
-                    "This Product ID already exists",
-                    "Duplicate Product ID",
-                    JOptionPane.WARNING_MESSAGE);
+            showError("This Product ID has already been used!");
             return;
         }
 
-        
         double price;
         int qty, max, min;
 
@@ -89,13 +91,13 @@ public class InputBasicData extends JFrame {
             min = Integer.parseInt(minStr);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Invalid number format!",
+                    "Invalid number format! Please enter valid numbers.",
                     "Input Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        
+        // ===== LOGIC VALIDATION =====
         if (price < 0) {
             showError("Price cannot be negative!");
             return;
@@ -107,7 +109,12 @@ public class InputBasicData extends JFrame {
         }
 
         if (min < 0) {
-            showError("Min cannot be negative!");
+            showError("Min cannot be less than 0!");
+            return;
+        }
+
+        if (max < 0) {
+            showError("Max cannot be negative!");
             return;
         }
 
@@ -121,93 +128,92 @@ public class InputBasicData extends JFrame {
             return;
         }
 
-        
-        Product newProduct = createProduct(idStr, nameStr, price, qty, max, min);
+        Product newProduct = null;
 
-        if (newProduct == null) return;
-
-        
-        if (management.addProduct(newProduct)) {
-            mainWindowForm.updateTable();
-
-            JOptionPane.showMessageDialog(this,
-                    "Product added successfully!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            dispose();
-            addWindowForm.dispose();
-        }
-    }
-
-    
-    private void showError(String msg) {
-        JOptionPane.showMessageDialog(this, msg,
-                "Validation Error",
-                JOptionPane.WARNING_MESSAGE);
-    }
-
-    
-    private Product createProduct(String id, String name, double price,
-                                  int qty, int max, int min) {
-
+        // ===== SPECIFIC DATA =====
         try {
-            switch (productType) {
+            if (productType.equals("Pencil")) {
 
-                case "Pencil":
-                    String color = JOptionPane.showInputDialog(this, "Enter Color (Black, Blue etc.)");
-                    if (color == null) return null;
+                String color = JOptionPane.showInputDialog(this, "Enter Color:");
+                if (color == null) return;
 
-                    String grade = JOptionPane.showInputDialog(this, "Enter Pencil Grade (2B, HB etc.)");
-                    if (grade == null) return null;
+                String grade = JOptionPane.showInputDialog(this, "Enter Grade:");
+                if (grade == null) return;
 
-                    return new Pencil(id, name, price, qty, max, min, color, grade);
+                newProduct = new Pencil(idStr, nameStr, price, qty, max, min, color, grade);
 
-                case "Pen":
-                    color = JOptionPane.showInputDialog(this, "Enter Color (Black, Red, Blue etc.)");
-                    if (color == null) return null;
+            } else if (productType.equals("Pen")) {
 
-                    String tipStr = JOptionPane.showInputDialog(this, "Enter Tip Size (0.35, 0.5 etc.):");
-                    if (tipStr == null) return null;
-                    double tip = Double.parseDouble(tipStr);
+                String color = JOptionPane.showInputDialog(this, "Enter Color:");
+                if (color == null) return;
 
-                    String penType = JOptionPane.showInputDialog(this, "Enter Pen Type (Gel, BallPen etc.)");
-                    if (penType == null) return null;
+                String tipStr = JOptionPane.showInputDialog(this, "Enter Tip Size:");
+                if (tipStr == null) return;
+                double tip = Double.parseDouble(tipStr);
 
-                    return new Pen(id, name, price, qty, max, min, color, tip, penType);
+                String penType = JOptionPane.showInputDialog(this, "Enter Pen Type:");
+                if (penType == null) return;
 
-                case "Notebook":
-                    String size = JOptionPane.showInputDialog(this, "Enter Size (A4, B5 etc.)");
-                    if (size == null) return null;
+                newProduct = new Pen(idStr, nameStr, price, qty, max, min, color, tip, penType);
 
-                    int gsm = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter GSM (70, 80 etc.)"));
-                    int pages = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Number of Pages (80, 120 etc.)"));
+            } else if (productType.equals("Notebook")) {
 
-                    return new Notebook(id, name, price, qty, max, min, size, gsm, pages);
+                String size = JOptionPane.showInputDialog(this, "Enter Size:");
+                if (size == null) return;
 
-                case "Report Paper":
-                    size = JOptionPane.showInputDialog(this, "Enter Size (A4, B5 etc.)");
-                    if (size == null) return null;
+                int gsm = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter GSM:"));
+                int pages = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Pages:"));
 
-                    gsm = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter GSM (70, 80 etc.)"));
-                    int sheets = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Number of Sheets (300, 500 etc.)"));
+                newProduct = new Notebook(idStr, nameStr, price, qty, max, min, size, gsm, pages);
 
-                    return new ReportPaper(id, name, price, qty, max, min, size, gsm, sheets);
+            } else if (productType.equals("Report Paper")) {
 
-                case "General Stationery":
-                    String statType = JOptionPane.showInputDialog(this, "Enter Type (Ruler, Cutter etc.)");
-                    if (statType == null) return null;
+                String size = JOptionPane.showInputDialog(this, "Enter Size:");
+                if (size == null) return;
 
-                    return new GeneralStationery(id, name, price, qty, max, min, statType);
+                int gsm = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter GSM:"));
+                int sheets = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Sheets:"));
+
+                newProduct = new ReportPaper(idStr, nameStr, price, qty, max, min, size, gsm, sheets);
+
+            } else if (productType.equals("General Stationery")) {
+
+                String type = JOptionPane.showInputDialog(this, "Enter Stationery Type:");
+                if (type == null) return;
+
+                newProduct = new GeneralStationery(idStr, nameStr, price, qty, max, min, type);
             }
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Invalid number format in extra details!",
+                    "Invalid number format in specific data!",
                     "Input Error",
                     JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        return null;
+        // ===== ADD PRODUCT =====
+        if (newProduct != null) {
+            boolean isAdded = management.addProduct(newProduct);
+
+            if (isAdded) {
+                mainWindowForm.updateTable();
+
+                JOptionPane.showMessageDialog(this,
+                        "Product added successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                dispose();
+                addWindowForm.dispose();
+            }
+        }
+    }
+
+    private void showError(String msg) {
+        JOptionPane.showMessageDialog(this,
+                msg,
+                "Validation Error",
+                JOptionPane.WARNING_MESSAGE);
     }
 }
