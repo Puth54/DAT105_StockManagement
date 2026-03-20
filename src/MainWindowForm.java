@@ -5,6 +5,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.Component;                          // สำหรับใช้ใน Renderer
 import java.awt.Color;                              // สำหรับตั้งค่าสี
@@ -21,7 +22,6 @@ public class MainWindowForm extends JFrame{
     private JScrollPane basic_information;   // JScrollPanel ของตาราง
     private JTable basicData;
     private JButton btnFullData;
-    private JButton btnRefreash;
 
     private JFrame frame;
 
@@ -85,7 +85,6 @@ public class MainWindowForm extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 String id = JOptionPane.showInputDialog(null,"Enter Product ID: ");
-                if (id == null) return;
                 EditBasicData edit_form = new EditBasicData(MainWindowForm.this, management, id);
                 edit_form.setVisible(true);
             }
@@ -106,14 +105,6 @@ public class MainWindowForm extends JFrame{
                 p.toString(),
                 "Full Product Data",
                 JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-        // ปุ่ม refreash
-        btnRefreash.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateTable();
             }
         });
     }
