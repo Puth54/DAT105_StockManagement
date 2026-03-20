@@ -80,6 +80,11 @@ public class Management {
         warnLowStock(p);
     }
 
+    // ✅ FIX: wrapper ให้ตรงกับ UI
+    public void updateProduct(String productId, String newName, double newPrice, int newMax, int newMin) {
+        editProduct(productId, newName, newPrice, newMin, newMax);
+    }
+
     // ================= INCREASE =================
 
     public void increaseProductQuantity(String productId, int addedQuantity) {
