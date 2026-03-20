@@ -5,168 +5,173 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.Component;                          // สำหรับใช้ใน Renderer
-import java.awt.Color;                              // สำหรับตั้งค่าสี
 
-public class MainWindowForm extends JFrame{
+public class MainWindowForm extends JFrame {
 
     // attribute
     private JPanel main_form;
-    private JPanel management_button;   // JPanel ของปุ่ม Management ทั้งหมด
+    private JPanel management_button;
     private JButton btnAdd;
     private JButton btnDecrease;
     private JButton btnEdit;
     private JButton btnIncrease;
-    private JScrollPane basic_information;   // JScrollPanel ของตาราง
+    private JScrollPane basic_information;
     private JTable basicData;
     private JButton btnFullData;
-    private JButton btnRefreash;
 
     private JFrame frame;
-
     private Management management;
 
-    // constructor + การทำงานใน Main
+    // constructor
     public MainWindowForm() {
         frame = new JFrame("Stock Management System");
-        management = new Management(); // สร้าง obj ของ Management เพื่อเชื่อมกับ ArrayList (Attribute ของ Management)
+        management = new Management();
 
         setupTable();
         updateTable();
 
         frame.setContentPane(main_form);
-
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
         frame.setSize(800, 500);
-        frame.setLocationRelativeTo(null); // ให้อยู่กึ่งกลางหน้าจอ
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        // ปุ่ม Add
+        // ================= ADD =================
         btnAdd.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 AddWindowForm add_form = new AddWindowForm(MainWindowForm.this, management);
                 add_form.setVisible(true);
-
                 updateTable();
             }
         });
 
-        // ปุ่ม increase
+        // ================= INCREASE =================
         btnIncrease.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String id = JOptionPane.showInputDialog(null,"Enter Product ID: ");
-                if (id == null) return;
-                int qty = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter increased quantity: "));
-                management.increaseProductQuantity(id, qty);
+                String id = JOptionPane.showInputDialog(null, "Enter Product ID: ");
+                if (id == null || id.trim().isEmpty()) return;
 
-                updateTable();
+                String qtyStr = JOptionPane.showInputDialog(null, "Enter increased quantity: ");
+                if (qtyStr == null) return;
+
+                try {
+                    int qty = Integer.parseInt(qtyStr);
+                    management.increaseProductQuantity(id, qty);
+                    updateTable();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid number format!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
-        // ปุ่ม decrease
+        // ================= DECREASE =================
         btnDecrease.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String id = JOptionPane.showInputDialog(null,"Enter Product ID: ");
-                if (id == null) return;
-                int qty = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter decreased quantity: "));
-                management.decreaseProductQuantity(id, qty);
+                String id = JOptionPane.showInputDialog(null, "Enter Product ID: ");
+                if (id == null || id.trim().isEmpty()) return;
 
-                updateTable();
+                String qtyStr = JOptionPane.showInputDialog(null, "Enter decreased quantity: ");
+                if (qtyStr == null) return;
+
+                try {
+                    int qty = Integer.parseInt(qtyStr);
+                    management.decreaseProductQuantity(id, qty);
+                    updateTable();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid number format!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
-        // ปุ่ม edit
+        // ================= EDIT =================
         btnEdit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String id = JOptionPane.showInputDialog(null,"Enter Product ID: ");
-                if (id == null) return;
+                String id = JOptionPane.showInputDialog(null, "Enter Product ID: ");
+                if (id == null || id.trim().isEmpty()) return;
+
+                if (!management.checkProductId(id)) {
+                    JOptionPane.showMessageDialog(null, "Product not found", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 EditBasicData edit_form = new EditBasicData(MainWindowForm.this, management, id);
                 edit_form.setVisible(true);
             }
         });
 
-        // ปุ่ม full data
+        // ================= FULL DATA =================
         btnFullData.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String id = JOptionPane.showInputDialog("Enter Product ID:");
-        if (id == null) return;
-        Product p = management.findProduct(id);
-        if (p == null) {
-            JOptionPane.showMessageDialog(null,"Product not found","Error",JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        JOptionPane.showMessageDialog(null,
-                p.toString(),
-                "Full Product Data",
-                JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+                if (id == null || id.trim().isEmpty()) return;
 
-        // ปุ่ม refreash
-        btnRefreash.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateTable();
-            }
-        });
-    }
-
-    // setup ค่าเริ่มต้นของตาราง basicData
-    private void setupTable() {
-        String[] columnNames = {"ID", "Name", "Price", "Quantity", "Max", "Min", "Status"}; // array ของ column ตาราง
-        DefaultTableModel model = new DefaultTableModel(null, columnNames); // DefaultTableModel ใช้ตั้งค่าตาราง
-        basicData.setModel(model);
-
-        // --- ส่วนที่เพิ่มเข้ามาเพื่อจัดการสี ---
-        int statusColumnIndex = 6; // คอลัมน์ Status คือ Index ที่ 6
-        basicData.getColumnModel().getColumn(statusColumnIndex).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus, int row, int column) {
-
-                // เรียกความสามารถพื้นฐานมาใช้ก่อน
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                // บังคับให้ JLabel ยอมรับสีพื้นหลัง
-                setOpaque(true);
-
-                if (value != null) {
-                    String status = value.toString();
-
-                    if (status.equalsIgnoreCase("Available")) {
-                        c.setBackground(new Color(40, 167, 69)); // สีเขียวเข้ม
-                        c.setForeground(Color.WHITE);           // ตัวอักษรขาว
-                    } else if (status.equalsIgnoreCase("Low Stock")) {
-                        c.setBackground(new Color(220, 53, 69));  // สีแดงเข้ม
-                        c.setForeground(Color.WHITE);           // ตัวอักษรขาว
-                    } else {
-                        // แถวอื่นๆ ให้เป็นสีพื้นหลังตารางปกติ
-                        c.setBackground(table.getBackground());
-                        c.setForeground(table.getForeground());
-                    }
-
-                    // กรณีที่กดเลือกแถว (Selection) ให้สีเข้มขึ้นเพื่อให้รู้ว่าเลือกอยู่
-                    if (isSelected) {
-                        c.setBackground(c.getBackground().darker());
-                    }
+                Product p = management.findProduct(id);
+                if (p == null) {
+                    JOptionPane.showMessageDialog(null, "Product not found", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
 
-                // จัดข้อความให้อยู่กึ่งกลาง
-                setHorizontalAlignment(JLabel.CENTER);
-
-                return c;
+                JOptionPane.showMessageDialog(null,
+                        p.toString(),
+                        "Full Product Data",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
     }
 
-    // ตั้งค่าข้อมูลในตาราง โดยดึงข้อมูลจาก ArrayList
+    // ================= SETUP TABLE =================
+    private void setupTable() {
+        String[] columnNames = {"ID", "Name", "Price", "Quantity", "Max", "Min", "Status"};
+        DefaultTableModel model = new DefaultTableModel(null, columnNames);
+        basicData.setModel(model);
+
+        int statusColumnIndex = 6;
+
+        basicData.getColumnModel().getColumn(statusColumnIndex)
+                .setCellRenderer(new DefaultTableCellRenderer() {
+
+                    @Override
+                    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                                   boolean isSelected, boolean hasFocus,
+                                                                   int row, int column) {
+
+                        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                        setOpaque(true);
+
+                        if (value != null) {
+                            String status = value.toString();
+
+                            if (status.equalsIgnoreCase("Available")) {
+                                c.setBackground(new Color(40, 167, 69));
+                                c.setForeground(Color.WHITE);
+                            } else if (status.equalsIgnoreCase("Low Stock")) {
+                                c.setBackground(new Color(220, 53, 69));
+                                c.setForeground(Color.WHITE);
+                            } else {
+                                c.setBackground(table.getBackground());
+                                c.setForeground(table.getForeground());
+                            }
+
+                            if (isSelected) {
+                                c.setBackground(c.getBackground().darker());
+                            }
+                        }
+
+                        setHorizontalAlignment(JLabel.CENTER);
+                        return c;
+                    }
+                });
+    }
+
+    // ================= UPDATE TABLE =================
     public void updateTable() {
         DefaultTableModel model = (DefaultTableModel) basicData.getModel();
         model.setRowCount(0);
@@ -185,8 +190,7 @@ public class MainWindowForm extends JFrame{
         }
     }
 
-
-    // Main Method ============================================================================
+    // ================= MAIN =================
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
